@@ -1,0 +1,8 @@
+Solution found.
+Minimum number of moves: 0
+
+
+Final state:
+Tube 1: [1,1]
+Tube 2: [2,2]
+Tube 3: [0,0]
