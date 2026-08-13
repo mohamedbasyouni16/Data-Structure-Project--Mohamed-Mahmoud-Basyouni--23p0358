@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Water Sort Lab — BFS Solver</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #0a0f1a;
+    --panel: #111a2c;
+    --panel-2: #0e1626;
+    --line: #223047;
+    --text: #e7ecf3;
+    --muted: #7d8ba3;
+    --accent: #5eead4;
+    --accent-dim: #1f4a44;
+    --warn: #fbbf24;
+    --danger: #f87171;
+    --radius: 10px;
+
+    --c1: #ef4444; /* red */
+    --c2: #3b82f6; /* blue */
+    --c3: #22c55e; /* green */
+    --c4: #eab308; /* yellow */
+    --c5: #a855f7; /* purple */
+    --c6: #fb923c; /* orange */
+    --c7: #06b6d4; /* cyan */
+    --c8: #ec4899; /* pink */
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin:0; padding:0;
+    background: radial-gradient(1200px 600px at 15% -10%, #10203a 0%, var(--bg) 55%);
+    color: var(--text);
+    font-family: 'Inter', system-ui, sans-serif;
+    min-height: 100vh;
+  }
+
+  .mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+
+  header {
+    padding: 28px clamp(16px, 4vw, 48px) 18px;
+    border-bottom: 1px solid var(--line);
+    display: flex; align-items: baseline; justify-content: space-between;
+    flex-wrap: wrap; gap: 8px;
+  }
+  .eyebrow {
+    font-family:'JetBrains Mono', monospace;
+    font-size: 11px; letter-spacing: .18em; color: var(--accent);
+    text-transform: uppercase; margin-bottom: 6px; display:block;
+  }
+  h1 {
+    margin: 0; font-family:'JetBrains Mono', monospace; font-weight: 800;
+    font-size: clamp(22px, 3.4vw, 32px); letter-spacing: -0.01em;
+  }
+  h1 span { color: var(--muted); font-weight: 500; }
+  .subtitle { color: var(--muted); font-size: 13px; max-width: 42ch; }
+
+  main {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 22px;
+    padding: 24px clamp(16px, 4vw, 48px) 60px;
+    align-items: start;
+  }
+  @media (max-width: 900px){
+    main { grid-template-columns: 1fr; }
+  }
+
+  .panel {
+    background: linear-gradient(180deg, var(--panel), var(--panel-2));
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 18px;
+  }
+  .panel + .panel { margin-top: 18px; }
+
+  .panel h2 {
+    font-family:'JetBrains Mono', monospace;
+    font-size: 12px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--muted); margin: 0 0 14px;
+    display:flex; align-items:center; gap:8px;
+  }
+  .panel h2::before {
+    content:''; width:6px; height:6px; border-radius:50%;
+    background: var(--accent); display:inline-block;
+    box-shadow: 0 0 8px var(--accent);
+  }
+
+  label { font-size: 12px; color: var(--muted); display:block; margin-bottom: 4px; }
+  .row { display:flex; gap:10px; }
+  .row > div { flex:1; }
+
+  input[type="number"], textarea {
+    width: 100%;
+    background: #0b1424;
+    border: 1px solid var(--line);
+    color: var(--text);
+    border-radius: 7px;
+    padding: 8px 10px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    outline: none;
+  }
+  input[type="number"]:focus, textarea:focus { border-color: var(--accent); }
+  textarea { resize: vertical; min-height: 92px; line-height:1.5; }
+
+  button {
+    font-family:'JetBrains Mono', monospace;
+    font-size: 12.5px; font-weight: 600;
+    border-radius: 7px;
+    border: 1px solid var(--line);
+    background: #0e1729;
+    color: var(--text);
+    padding: 9px 12px;
+    cursor: pointer;
+    transition: border-color .15s, transform .05s, background .15s;
+  }
+  button:hover { border-color: var(--accent); }
+  button:active { transform: scale(0.98); }
+  button:disabled { opacity: .4; cursor: not-allowed; }
+  button.primary {
+    background: var(--accent); color: #05201c; border-color: var(--accent);
+  }
+  button.primary:hover { filter: brightness(1.08); }
+  button.ghost { background: transparent; }
+  button.danger { border-color: #5a2b2b; color: var(--danger); }
+  button.danger:hover { border-color: var(--danger); }
+
+  .btn-grid { display:grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+  .btn-grid.thirds { grid-template-columns: 1fr 1fr 1fr; }
+
+  .swatches { display:flex; gap:8px; flex-wrap:wrap; margin-top: 10px; }
+  .swatch {
+    width: 30px; height: 30px; border-radius: 8px; cursor: pointer;
+    border: 2px solid transparent; position: relative;
+    box-shadow: inset 0 -6px 10px rgba(0,0,0,.25), inset 0 2px 4px rgba(255,255,255,.15);
+  }
+  .swatch.selected { border-color: #fff; transform: scale(1.08); }
+  .swatch.empty {
+    background: repeating-linear-gradient(45deg, #182338, #182338 4px, #101a2c 4px, #101a2c 8px);
+    border: 2px dashed var(--line);
+  }
+
+  .hint { font-size: 11.5px; color: var(--muted); margin-top: 10px; line-height: 1.5; }
+
+  /* ---- Tube rack ---- */
+  .rack-wrap { min-height: 260px; }
+  .rack {
+    display: flex; gap: clamp(14px, 2.2vw, 28px); flex-wrap: wrap;
+    justify-content: flex-start; align-items: flex-end;
+    padding: 30px 10px 10px;
+  }
+  .tube-col { display:flex; flex-direction:column; align-items:center; gap:10px; }
+  .tube {
+    --cap: 4;
+    width: 46px;
+    border: 3px solid #2c3c58;
+    border-top: none;
+    border-radius: 0 0 16px 16px;
+    background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,0) 30%), #0c1526;
+    position: relative;
+    display:flex; flex-direction: column-reverse;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform .12s, border-color .15s, box-shadow .15s;
+  }
+  .tube::before{
+    /* glass rim */
+    content:''; position:absolute; top:-3px; left:-3px; right:-3px; height:8px;
+    background: #2c3c58; border-radius: 4px 4px 0 0;
+  }
+  .tube:hover { border-color: #3d5679; }
+  .tube.selected {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-dim), 0 0 18px rgba(94,234,212,.35);
+    transform: translateY(-4px);
+  }
+  .tube.shake { animation: shake .32s; }
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    20% { transform: translateX(-6px); }
+    40% { transform: translateX(5px); }
+    60% { transform: translateX(-4px); }
+    80% { transform: translateX(3px); }
+  }
+  .tube.pour-source { animation: tilt .5s ease-in-out; }
+  @keyframes tilt {
+    0%,100% { transform: rotate(0deg); }
+    50% { transform: rotate(-18deg) translateX(-6px); }
+  }
+
+  .layer {
+    width: 100%; flex-shrink: 0;
+    position: relative;
+    transition: height .28s ease;
+  }
+  .layer::after{
+    content:''; position:absolute; top:0; left:0; right:0; height:35%;
+    background: linear-gradient(180deg, rgba(255,255,255,.35), rgba(255,255,255,0));
+  }
+  .layer.new { animation: pourIn .35s ease; }
+  @keyframes pourIn { from { opacity:0; transform: scaleY(0.4); } to { opacity:1; transform: scaleY(1);} }
+
+  .tube-label { font-family:'JetBrains Mono', monospace; font-size: 11px; color: var(--muted); }
+  .tube-empty-msg { color: var(--muted); font-size: 13px; padding: 40px 0; }
+
+  .color-1{ background: var(--c1); } .color-2{ background: var(--c2); }
+  .color-3{ background: var(--c3); } .color-4{ background: var(--c4); }
+  .color-5{ background: var(--c5); } .color-6{ background: var(--c6); }
+  .color-7{ background: var(--c7); } .color-8{ background: var(--c8); }
+
+  /* ---- status / results ---- */
+  .status-line { font-family:'JetBrains Mono', monospace; font-size: 13px; margin-bottom: 6px; }
+  .status-ok { color: var(--accent); }
+  .status-bad { color: var(--danger); }
+  .status-neutral { color: var(--muted); }
+
+  .moves-list {
+    max-height: 220px; overflow-y: auto;
+    border: 1px solid var(--line); border-radius: 7px;
+    background: #0b1424;
+    font-family: 'JetBrains Mono', monospace; font-size: 12.5px;
+    margin-top: 10px;
+  }
+  .move-row {
+    padding: 7px 10px; border-bottom: 1px solid var(--line);
+    display:flex; justify-content: space-between; color: var(--muted);
+  }
+  .move-row:last-child { border-bottom: none; }
+  .move-row.done { color: var(--text); }
+  .move-row.current { color: var(--accent); background: rgba(94,234,212,.07); }
+
+  .counter {
+    font-family:'JetBrains Mono', monospace; font-size: 12px; color: var(--muted);
+    display:flex; justify-content: space-between; margin-top: 12px;
+  }
+  .counter b { color: var(--text); }
+
+  footer {
+    text-align:center; color: var(--muted); font-size: 11.5px;
+    padding: 0 20px 30px; font-family:'JetBrains Mono', monospace;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <span class="eyebrow">CSE — Colored Water Sort Project</span>
+    <h1>Water Sort <span>/ Lab</span></h1>
+    <div class="subtitle">Bonus GUI for the BFS minimum-move solver. The graded core stays the C++ console program — this reproduces the same rules (pour logic, goal test, BFS) for a visual, interactive demo.</div>
+  </div>
+</header>
+
+<main>
+  <!-- LEFT: controls -->
+  <div>
+    <div class="panel">
+      <h2>Setup</h2>
+      <div class="row">
+        <div>
+          <label for="numTubes">Tubes (N)</label>
+          <input type="number" id="numTubes" min="2" max="10" value="5">
+        </div>
+        <div>
+          <label for="capacity">Capacity (C)</label>
+          <input type="number" id="capacity" min="1" max="8" value="4">
+        </div>
+      </div>
+      <div class="btn-grid">
+        <button id="btnGenerateEmpty" class="ghost">Build empty rack</button>
+        <button id="btnRandom" class="ghost">Random puzzle</button>
+      </div>
+
+      <div style="margin-top:16px;">
+        <label>Pick a color, then click a tube to add a layer</label>
+        <div class="swatches" id="swatches"></div>
+      </div>
+
+      <div class="hint">Click a filled tube's top layer to pop it off while building. Empty (0) is selected by default.</div>
+    </div>
+
+    <div class="panel">
+      <h2>Import (spec format)</h2>
+      <label for="importArea">N / C / tube rows, bottom→top, 0 = empty</label>
+      <textarea id="importArea" class="mono" placeholder="4&#10;2&#10;1 2&#10;2 1&#10;0 0&#10;0 0"></textarea>
+      <div class="btn-grid">
+        <button id="btnLoad" class="ghost">Load into rack</button>
+        <button id="btnExport" class="ghost">Export current</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Solve</h2>
+      <div class="btn-grid">
+        <button id="btnSolve" class="primary">Run BFS solve</button>
+        <button id="btnReset" class="danger">Reset rack</button>
+      </div>
+      <div id="statusArea" style="margin-top:14px;"></div>
+      <div id="movesList" class="moves-list" style="display:none;"></div>
+      <div class="btn-grid thirds" id="playControls" style="display:none;">
+        <button id="btnPrev" class="ghost">◀ Prev</button>
+        <button id="btnPlay" class="ghost">▶ Play</button>
+        <button id="btnNext" class="ghost">Next ▶</button>
+      </div>
+      <div class="counter" id="counterArea" style="display:none;">
+        <span>Move <b id="counterCur">0</b> / <span id="counterTotal">0</span></span>
+        <span id="counterOptimal"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: rack -->
+  <div class="panel rack-wrap">
+    <h2>Tube rack — click a tube to select, click another to pour</h2>
+    <div class="rack" id="rack"></div>
+  </div>
+</main>
+
+<footer>water_sort_gui.html — standalone, no build step — mirrors State.h / Solver.h logic from the C++ console program</footer>
+
+<script>
+(function(){
+  "use strict";
+
+  // ---------------------------------------------------------------
+  // Model — mirrors State.h / Solver.h from the C++ console program
+  // ---------------------------------------------------------------
+  // A tube is stored as an array of filled colors, bottom-first,
+  // WITHOUT trailing empty slots (unlike the C++ fixed-size array).
+  // capacity is tracked separately.
+
+  let N = 5, CAP = 4;
+  let tubes = [];         // array of arrays of ints (1..8), no zeros
+  let selectedColor = 0;  // 0 = empty / eraser
+  let selectedTube = null;
+  let solving = false;
+  let solution = null;    // {solved, moves:[{src,dst}]}
+  let playIndex = 0;      // how many moves have been applied in playback
+  let playTimer = null;
+  let baseTubesForPlayback = null;
+
+  const NUM_COLORS = 8;
+  const COLOR_NAMES = ["", "Red","Blue","Green","Yellow","Purple","Orange","Cyan","Pink"];
+
+  function topColor(tube){ return tube.length ? tube[tube.length-1] : 0; }
+
+  function topRunLength(tube){
+    if (!tube.length) return 0;
+    const c = tube[tube.length-1];
+    let n = 0;
+    for (let i = tube.length-1; i >= 0 && tube[i] === c; i--) n++;
+    return n;
+  }
+
+  function isValidMove(state, src, dst){
+    if (src === dst) return false;
+    const s = state[src], d = state[dst];
+    if (s.length === 0) return false;           // nothing to pour
+    if (d.length >= CAP) return false;           // destination full
+    if (d.length > 0 && topColor(d) !== topColor(s)) return false;
+    return true;
+  }
+
+  function applyMove(state, src, dst){
+    const next = state.map(t => t.slice());
+    const s = next[src], d = next[dst];
+    const color = topColor(s);
+    const runLen = topRunLength(s);
+    const freeSpace = CAP - d.length;
+    const amount = Math.min(runLen, freeSpace);
+    for (let k = 0; k < amount; k++){
+      d.push(color);
+      s.pop();
+    }
+    return next;
+  }
+
+  function isGoal(state){
+    for (const tube of state){
+      if (tube.length === 0) continue;
+      if (tube.length !== CAP) return false;
+      const c = tube[0];
+      for (const v of tube) if (v !== c) return false;
+    }
+    return true;
+  }
+
+  function stateKey(state){
+    return state.map(t => t.join(',')).join('|');
+  }
+
+  // BFS — identical structure to Solver.cpp, using Maps + array-as-queue
+  // with a pointer instead of shift() for performance.
+  function solve(start){
+    if (isGoal(start)) return { solved: true, moves: [] };
+
+    const n = start.length;
+    const visited = new Set();
+    const parentKey = new Map();
+    const parentMove = new Map();
+    const keyToState = new Map();
+
+    const startKey = stateKey(start);
+    visited.add(startKey);
+    keyToState.set(startKey, start);
+
+    let queue = [start];
+    let qi = 0;
+    let goalKey = null;
+
+    while (qi < queue.length && !goalKey){
+      const cur = queue[qi++];
+      const curKey = stateKey(cur);
+
+      for (let src = 0; src < n && !goalKey; src++){
+        for (let dst = 0; dst < n && !goalKey; dst++){
+          if (!isValidMove(cur, src, dst)) continue;
+          const next = applyMove(cur, src, dst);
+          const nextKey = stateKey(next);
+          if (visited.has(nextKey)) continue;
+
+          visited.add(nextKey);
+          parentKey.set(nextKey, curKey);
+          parentMove.set(nextKey, {src, dst});
+          keyToState.set(nextKey, next);
+
+          if (isGoal(next)){ goalKey = nextKey; break; }
+          queue.push(next);
+        }
+      }
+      // Safety valve for pathological inputs in a browser tab.
+      if (queue.length > 400000) return { solved: false, moves: [], aborted: true };
+    }
+
+    if (!goalKey) return { solved: false, moves: [] };
+
+    const path = [];
+    let k = goalKey;
+    while (k !== startKey){
+      path.push(parentMove.get(k));
+      k = parentKey.get(k);
+    }
+    path.reverse();
+    return { solved: true, moves: path };
+  }
+
+  // ---------------------------------------------------------------
+  // Rack construction / rendering
+  // ---------------------------------------------------------------
+
+  function buildEmptyRack(){
+    N = clamp(parseInt(document.getElementById('numTubes').value) || 5, 2, 10);
+    CAP = clamp(parseInt(document.getElementById('capacity').value) || 4, 1, 8);
+    document.getElementById('numTubes').value = N;
+    document.getElementById('capacity').value = CAP;
+    tubes = Array.from({length:N}, () => []);
+    selectedTube = null;
+    solution = null;
+    clearStatus();
+    render();
+  }
+
+  function clamp(v, lo, hi){ return Math.max(lo, Math.min(hi, v)); }
+
+  function randomPuzzle(){
+    buildEmptyRackFromCurrentInputs();
+    const numColors = Math.max(1, Math.min(N - 1, NUM_COLORS));
+    // Start from a solved state: first `numColors` tubes each full of one color.
+    let state = Array.from({length:N}, () => []);
+    for (let c = 1; c <= numColors; c++){
+      state[c-1] = Array(CAP).fill(c);
+    }
+    // Scramble by applying random *legal* forward moves from the solved
+    // state — guarantees the result is reachable back to the goal.
+    const scrambleSteps = 25 + Math.floor(Math.random()*25);
+    for (let s = 0; s < scrambleSteps; s++){
+      const legal = [];
+      for (let i=0;i<N;i++) for(let j=0;j<N;j++){
+        if (isValidMove(state,i,j)) legal.push([i,j]);
+      }
+      if (!legal.length) break;
+      const [src,dst] = legal[Math.floor(Math.random()*legal.length)];
+      state = applyMove(state, src, dst);
+    }
+    tubes = state;
+    selectedTube = null;
+    solution = null;
+    clearStatus();
+    render();
+  }
+
+  function buildEmptyRackFromCurrentInputs(){
+    N = clamp(parseInt(document.getElementById('numTubes').value) || 5, 2, 10);
+    CAP = clamp(parseInt(document.getElementById('capacity').value) || 4, 1, 8);
+  }
+
+  function render(){
+    const rack = document.getElementById('rack');
+    rack.innerHTML = '';
+    if (!tubes.length){
+      rack.innerHTML = '<div class="tube-empty-msg">Build a rack, load a puzzle, or generate a random one to begin.</div>';
+      return;
+    }
+    tubes.forEach((tube, idx) => {
+      const col = document.createElement('div');
+      col.className = 'tube-col';
+
+      const t = document.createElement('div');
+      t.className = 'tube' + (selectedTube === idx ? ' selected' : '');
+      t.style.height = (CAP * 30 + 6) + 'px';
+      t.dataset.idx = idx;
+
+      for (let i = 0; i < tube.length; i++){
+        const layer = document.createElement('div');
+        layer.className = 'layer color-' + tube[i];
+        layer.style.height = '30px';
+        t.appendChild(layer);
+      }
+
+      t.addEventListener('click', () => onTubeClick(idx));
+      col.appendChild(t);
+
+      const label = document.createElement('div');
+      label.className = 'tube-label mono';
+      label.textContent = 'T' + (idx+1);
+      col.appendChild(label);
+
+      rack.appendChild(col);
+    });
+  }
+
+  function onTubeClick(idx){
+    if (solving) return;
+
+    // Build mode: if a color is selected (not eraser-only interaction),
+    // clicking adds/removes a layer directly — this doubles as the
+    // "manual play" pour interaction when two different tubes are
+    // clicked in sequence without a color add in between.
+    if (buildMode()){
+      if (selectedColor === 0){
+        // eraser: pop top layer
+        if (tubes[idx].length) tubes[idx].pop();
+      } else {
+        if (tubes[idx].length < CAP) tubes[idx].push(selectedColor);
+      }
+      solution = null;
+      clearStatus();
+      render();
+      return;
+    }
+
+    // Manual pour mode (no color selected as "active brush")
+    if (selectedTube === null){
+      if (tubes[idx].length === 0) { flash(idx); return; }
+      selectedTube = idx;
+      render();
+      return;
+    }
+    if (selectedTube === idx){
+      selectedTube = null;
+      render();
+      return;
+    }
+    if (!isValidMove(tubes, selectedTube, idx)){
+      flash(idx);
+      selectedTube = null;
+      render();
+      return;
+    }
+    tubes = applyMove(tubes, selectedTube, idx);
+    selectedTube = null;
+    solution = null;
+    clearStatus();
+    render();
+  }
+
+  function buildMode(){
+    return document.getElementById('modeToggle') ? false : (selectedColor !== -1) && buildModeFlag;
+  }
+
+  let buildModeFlag = true; // starts in "build" mode until first Solve run
+
+  function flash(idx){
+    const el = document.querySelector('.tube[data-idx="'+idx+'"]');
+    if (el){ el.classList.add('shake'); setTimeout(()=>el.classList.remove('shake'), 320); }
+  }
+
+  // ---------------------------------------------------------------
+  // Swatches
+  // ---------------------------------------------------------------
+  function buildSwatches(){
+    const wrap = document.getElementById('swatches');
+    wrap.innerHTML = '';
+    const empty = document.createElement('div');
+    empty.className = 'swatch empty selected';
+    empty.title = 'Empty / eraser';
+    empty.dataset.color = 0;
+    wrap.appendChild(empty);
+
+    for (let c = 1; c <= NUM_COLORS; c++){
+      const sw = document.createElement('div');
+      sw.className = 'swatch color-' + c;
+      sw.title = COLOR_NAMES[c] + ' (code ' + c + ')';
+      sw.dataset.color = c;
+      wrap.appendChild(sw);
+    }
+    wrap.addEventListener('click', (e) => {
+      const el = e.target.closest('.swatch');
+      if (!el) return;
+      selectedColor = parseInt(el.dataset.color);
+      buildModeFlag = true;
+      [...wrap.children].forEach(c => c.classList.remove('selected'));
+      el.classList.add('selected');
+    });
+  }
+
+  // ---------------------------------------------------------------
+  // Import / export (spec's console format)
+  // ---------------------------------------------------------------
+  function loadFromText(){
+    const raw = document.getElementById('importArea').value.trim();
+    if (!raw){ setStatus('Paste puzzle text first.', 'bad'); return; }
+    const lines = raw.split('\n').map(l => l.trim()).filter(l => l.length);
+    try {
+      const n = parseInt(lines[0]);
+      const c = parseInt(lines[1]);
+      if (!n || !c || lines.length < 2 + n) throw new Error('bad format');
+      const parsed = [];
+      for (let i = 0; i < n; i++){
+        const nums = lines[2+i].split(/\s+/).map(Number);
+        if (nums.length !== c) throw new Error('row length mismatch');
+        parsed.push(nums.filter(v => v !== 0));
+      }
+      N = n; CAP = c;
+      document.getElementById('numTubes').value = N;
+      document.getElementById('capacity').value = CAP;
+      tubes = parsed;
+      selectedTube = null;
+      solution = null;
+      clearStatus();
+      render();
+      setStatus('Loaded ' + n + ' tubes, capacity ' + c + '.', 'neutral');
+    } catch (err){
+      setStatus('Could not parse — check the format (N / C / one row per tube).', 'bad');
+    }
+  }
+
+  function exportToText(){
+    const lines = [String(N), String(CAP)];
+    for (const tube of tubes){
+      const row = tube.slice();
+      while (row.length < CAP) row.push(0);
+      lines.push(row.join(' '));
+    }
+    document.getElementById('importArea').value = lines.join('\n');
+  }
+
+  // ---------------------------------------------------------------
+  // Solve + playback
+  // ---------------------------------------------------------------
+  function runSolve(){
+    if (!tubes.length){ setStatus('Build a rack first.', 'bad'); return; }
+    buildModeFlag = false;
+    selectedTube = null;
+    solving = true;
+    setStatus('Solving…', 'neutral');
+    // Let the "Solving…" message paint before the (synchronous) BFS runs.
+    setTimeout(() => {
+      const t0 = performance.now();
+      solution = solve(tubes);
+      const ms = (performance.now() - t0).toFixed(0);
+      solving = false;
+      baseTubesForPlayback = tubes.map(t => t.slice());
+      playIndex = 0;
+
+      if (solution.aborted){
+        setStatus('Search space too large for the browser demo — try fewer tubes/colors, or use the C++ program.', 'bad');
+        hidePlayback();
+        return;
+      }
+      if (!solution.solved){
+        setStatus('No solution exists.', 'bad');
+        hidePlayback();
+        return;
+      }
+      setStatus('Solution found — minimum moves: ' + solution.moves.length + '  (' + ms + ' ms)', 'ok');
+      renderMovesList();
+      showPlayback();
+    }, 30);
+  }
+
+  function setStatus(msg, kind){
+    const area = document.getElementById('statusArea');
+    area.innerHTML = '<div class="status-line status-' + (kind||'neutral') + '">' + msg + '</div>';
+  }
+  function clearStatus(){
+    document.getElementById('statusArea').innerHTML = '';
+    document.getElementById('movesList').style.display = 'none';
+    hidePlayback();
+  }
+
+  function renderMovesList(){
+    const list = document.getElementById('movesList');
+    list.style.display = 'block';
+    list.innerHTML = solution.moves.map((m, i) =>
+      '<div class="move-row" data-i="'+i+'"><span>' + (i+1) + '. Tube ' + (m.src+1) + ' → Tube ' + (m.dst+1) + '</span><span></span></div>'
+    ).join('');
+  }
+
+  function showPlayback(){
+    document.getElementById('playControls').style.display = 'grid';
+    document.getElementById('counterArea').style.display = 'flex';
+    document.getElementById('counterTotal').textContent = solution.moves.length;
+    document.getElementById('counterOptimal').textContent = 'optimal: ' + solution.moves.length;
+    updatePlaybackUI();
+  }
+  function hidePlayback(){
+    document.getElementById('playControls').style.display = 'none';
+    document.getElementById('counterArea').style.display = 'none';
+    stopPlay();
+  }
+
+  function updatePlaybackUI(){
+    tubes = baseTubesForPlayback.map(t => t.slice());
+    for (let i = 0; i < playIndex; i++){
+      tubes = applyMove(tubes, solution.moves[i].src, solution.moves[i].dst);
+    }
+    render();
+    document.getElementById('counterCur').textContent = playIndex;
+    [...document.querySelectorAll('.move-row')].forEach((row, i) => {
+      row.classList.toggle('done', i < playIndex);
+      row.classList.toggle('current', i === playIndex);
+    });
+    document.getElementById('btnPrev').disabled = playIndex === 0;
+    document.getElementById('btnNext').disabled = playIndex >= solution.moves.length;
+  }
+
+  function stepNext(){
+    if (!solution || playIndex >= solution.moves.length) { stopPlay(); return; }
+    playIndex++;
+    updatePlaybackUI();
+    if (playIndex >= solution.moves.length) stopPlay();
+  }
+  function stepPrev(){
+    if (!solution || playIndex <= 0) return;
+    playIndex--;
+    updatePlaybackUI();
+  }
+  function togglePlay(){
+    if (playTimer){ stopPlay(); return; }
+    document.getElementById('btnPlay').textContent = '⏸ Pause';
+    playTimer = setInterval(stepNext, 650);
+  }
+  function stopPlay(){
+    if (playTimer){ clearInterval(playTimer); playTimer = null; }
+    document.getElementById('btnPlay').textContent = '▶ Play';
+  }
+
+  // ---------------------------------------------------------------
+  // Wire up
+  // ---------------------------------------------------------------
+  document.getElementById('btnGenerateEmpty').addEventListener('click', buildEmptyRack);
+  document.getElementById('btnRandom').addEventListener('click', randomPuzzle);
+  document.getElementById('btnLoad').addEventListener('click', loadFromText);
+  document.getElementById('btnExport').addEventListener('click', exportToText);
+  document.getElementById('btnSolve').addEventListener('click', runSolve);
+  document.getElementById('btnReset').addEventListener('click', () => { buildEmptyRack(); });
+  document.getElementById('btnPrev').addEventListener('click', stepPrev);
+  document.getElementById('btnNext').addEventListener('click', stepNext);
+  document.getElementById('btnPlay').addEventListener('click', togglePlay);
+
+  buildSwatches();
+  buildEmptyRack();
+})();
+</script>
+</body>
+</html>
